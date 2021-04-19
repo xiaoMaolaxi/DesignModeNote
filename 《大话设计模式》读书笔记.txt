@@ -1,0 +1,933 @@
+
+单一职责原则（SRP）：就一个类而言，应该仅有一个引起它发生变化的原因。
+				类功能性单一，多于一个功能则需要解耦，分出另一个单独的类
+开放-封闭原则（OCP）：类应该是可以扩展的，但是定型后不可修改。
+				扩展是开放的，更改是封闭的，发生变化的时候可以通过扩展来实现
+依赖倒转原则（DIP）：高层模块不应该依赖底层模块。两者都应该依赖对象
+			  抽象不应该依赖细节。细节应该依赖抽象
+里氏代换原则（LSP）：子类必须能够替换掉它们的父类
+				子类设计原则，如果把父类都替换成子类，程序的行为不应该发生变化
+迪米特原则（LoD）：如果两个类不必彼此直接通信，那么这两个类就不应当发生直接的相互作用。如果其中一个类需要调用另一类的某一个方法的话，可以通过第三者转发这个调用
+				对于被依赖的类来说，无论逻辑多么复杂，都尽量地的将逻辑封装在类的内部，对外除了提供的public方法，不对外泄漏任何信息。
+合成/聚合复用原则（CARP）：合成是一种强拥有关系，A对象包含B对象，他们的生命周期是相同的。聚合是一种弱拥有关系，A对象也可以包含B对象，但是B对象不是A对象的一部分
+				   优先使用对象的合成/聚合将有助于你保存每个类被封装，并被集中在单个任务上。这样类和类继承层次会保持较小的规模。
+				
+				
+1. 简单工厂模式：使用一个单独的类 为有共性的类 做实例化的过程
+				简单工厂模式的最大优点在于工厂类中包含必要的判断，根据客户端的选择条件动态实例化相关的类
+				对于客户端来说，去除了与具体产品的依赖
+	class OperationFactory
+	{
+	public:
+		static Operation createOperae(string name)
+		{
+			Operation oper = null;
+			
+			switch(oper)
+			{
+				case "Operation1":
+					oper = new Operation1();
+					brake;
+				case "Operation2":
+					oper = new Operation2();
+					brake;
+				...
+			}		
+			return oper;
+		}
+	}
+
+2. 工厂方法模式：定义一个用于创建对象的接口，让子类决定实例化哪一个类。工厂方法使一个类的实例化延迟到其子类
+				工厂方法模式实现时，把简单工厂的内部逻辑判断移到了客户端代码来实现
+				客户端需要决定实例化哪一个工厂来实例化需要的类
+	class Object
+	{
+	public:
+		void DoSomething();
+	}
+	class ManObject : Object
+	{
+		...
+	}
+	class WomanObject : Object
+	{
+		...
+	}
+	class IFactory
+	{
+	public:
+		Object CreateOBJ();
+	}
+	class ManObjectFactory : IFactory
+	{
+	public:
+		Object CreateOBJ(){return new ManObject();}
+	}
+	class WomanObjectFactory : IFactory
+	{
+	public:
+		Object CreateOBJ(){return new WomanObject();}
+	}	
+	//使用方法
+	IFactory factory = new ManObjectFactory();	//在需要的时候可以替换为WomanObjectFactory
+	Object       obj = factory.CreateOBJ();		//这样客户端代码只需要修改一处即可
+	obj.DoSomething();
+	
+3. 策略模式：定义了算法家族，分别封装起来，让它们之间可以互相替换。不影响代码结构的同时可以替换不同的算法用例
+	class Strategy()
+	{
+		//算法方法
+		public viod AlgorithmInterface();
+	}
+	class ConcreteStrategyA : Strategy
+	{
+	//算法A 实现方法
+	public override viud AlgorithmInterface();
+	}
+	class ConcreteStrategyB : Strategy
+	{
+	//算法B 实现方法
+	public override viud AlgorithmInterface();
+	}
+	class Context
+	{
+	private:
+		Strategy strategy;
+	public:
+		Context(Strategy strategy){this->strategy = strategy;}//传入具体的算法类
+		void ContextInterface(){this->strategy.AlgorithmInterface();}//调用具体的算法类的算法方法
+	}
+	//使用方式
+	Context context = new Context(new ConcreteStrategyA());//new出算法A类，放入到Context类
+	context.ContextInterface();//调用context的ContextInterface方法，会调用到算法A的AlgorithmInterface方法
+
+4. 装饰模式：动态地给一个实例化对象添加一些额外的功能，所需的功能需要按正确的顺序依次添加
+	class Person
+	{
+	private:
+		string name;
+	public:
+		void Person(string name){this->name = name;}
+		virtual void Show();
+	}
+	class Finery : Person
+	{
+	protected:
+		Person component;
+	public:
+		void Decorate(Person component){this->component = component;}
+		override void Show(){if(component != NULL) component.Show();}
+	}
+	class Tshit :Finery
+	{
+	public:
+		void DosomethingForTshit();
+		override void Show(){DosomethingForTshit(); component.Show();}
+	}
+	class Shoes :Finery
+	{
+	public:
+		void DosomethingForShoes();
+		override void Show(){DosomethingForShoes(); component.Show();}
+	}
+	//使用方式
+	Person man = new Person("name");	//装饰过程：ts.component=man
+	T-shit ts  = new T-shit();			//装饰过程: ss.component=ts
+	Shoes  ss  = new Shoes();			//装饰过程: ss.Show()
+	ts.Decorate(man);					//装饰过程:		==> {DosomethingForShoes(); component.Show();}
+	ss.Decorate(ts);					//装饰过程:		==> {DosomethingForShoes(); DosomethingForTshit();component.Show();}
+	ss.Show();							//这样一路往上调用Show函数，就可以得到所有装饰功能执行过后的结果
+	
+5. 代理模式：为其他对象提供一种代理以控制对这个对象的访问
+			1. 远程代理，为一个对象在不同的地址空间提供局部代表。这样可以隐藏一个对象存在于不同地址空间的事实
+			2. 虚拟代理，根据需要创建开销很大的对象，通过它来存放实例化需要很长时间的真实对象
+			3. 安全代理，用来控制真是对象访问时的权限。一般用于对象应该有不同的访问权的时候
+			4. 智能指引，当调用真实对象时，代理处理另外一些事情
+	class Subject()
+	{
+	public:
+		void Request();
+	}
+	class RealSubject : Subject
+	{
+	public:
+		override void Request();
+	}
+	class Proxy : Subject
+	{
+	RealSubject realsubject;
+	public:
+		override void Request()
+		{
+			if(realsubject == null)
+				realsubject = new RealSubject();
+			realsubject.Request();
+		}
+	}
+	//使用方法
+	Proxy proxy = new Proxy();
+	proxy.Request();
+	
+6. 原型模式：用原型实例指定创建对象的种类，并且通过拷贝这些原型创建新的对象
+			即符合拷贝构造的类。利用一个实例化的对象去创建初始化另一个可定制的对象，而且不需要知道任何创建细节
+			对于C++而言，即使提供一个合适的拷贝构造函数
+			浅拷贝：如果在类中没有显式地声明一个拷贝构造函数，那么，编译器将会自动生成一个默认的拷贝构造函数，该构造函数完成对象之间的位拷贝。
+			深拷贝：如果一个类拥有资源，当这个类的对象发生复制过程的时候，资源重新分配，这个过程就是深拷贝
+			*浅拷贝会导致2个不同实例化对象中的指针指向同一块内存（位拷贝）
+	class Object 						
+	{									
+	private:						
+		int a;						
+		string srt = new string();
+	public:
+		Object(int b){ a=b;}		
+		Object(const Object& C)		//拷贝构造函数是一种特殊的构造函数，函数的名称必须和类名称一致，它的唯一的一个参数是本类型的一个引用变量，该参数是const类型，不可变的。
+		{						
+			a=C.a;				 
+			srt = new string(); 	//在拷贝构造函数中，需要为新的str申请资源
+		}						
+	}			
+	//使用方法
+	Object objA = new Object();														//以下情况都会调用拷贝构造函数：
+			     CloneObject(objA);		//CloneObject(const Object&)				//		1. 一个对象以值传递的方式传入函数体
+	Object objB = ReturnObject();		//Object ReturnObject()						//		2. 一个对象以值传递的方式从函数返回
+	Object objB = new Object(objA);													//		3. 一个对象需要通过另外一个对象进行初始化
+	
+7. 模板方法模式：定义一个操作中的算法的骨架，而将一些步骤延迟到子类中。模板方法使得子类可以不改变一个算法的结构即可重定义该算法的某些特定步骤
+			在软件工程中，它是一种软件设计模式，和C++模板没有关连
+			利用面向对象的多态性，将子类相同的结构或者行为抽象出来，放到父类（抽象类）中定义出共性的框架。再在子类中实现各自不同的步骤或行为
+    class AbstractClass
+    {
+    public:
+    	virtual void PrimitiveOperation1()=0;
+    	virtual void PrimitiveOperation2()=0;
+    	void TemplateMethod()		//模板方法定义算法的骨架
+		{
+			PrimitiveOperation1();
+			PrimitiveOperation2();
+		}
+    };    
+    class ConcreteClass1 :public AbstractClass
+    {
+    public:
+    	void PrimitiveOperation1(){//dosomething for ConcreteClass1}
+    	void PrimitiveOperation2(){//dosomething for ConcreteClass1}
+    };
+    class ConcreteClass2 :public AbstractClass
+    {
+    public:
+    	void PrimitiveOperation1(){//dosomething for ConcreteClass2}
+    	void PrimitiveOperation2(){//dosomething for ConcreteClass2}
+    };	
+	//使用方法
+	AbstractClass *AC1 = new ConcreteClass1();		//注意这里new出来的ConcreteClass1放在AbstractClass类指针里面
+	AC1->TemplateMethod();							//调用抽象类的模板方法，TemplateMethod方法，实际会导致子类自己特有的方法被调用
+	AbstractClass *AC2 = new ConcreteClass2();
+	AC2->TemplateMethod();	
+	
+8. 外观模式：为子系统中的一组接口提供一个一致的界面，此模式定义了一个高层接口，这个接口使得这一子系统更加容易使用
+			为现有的复杂的代码封装一层简单的调用接口类
+	class SubSys1()
+	{
+	public:
+		void Method1(){//dosomething for SubSys1}
+	}
+	class SubSys2()
+	{
+	public:
+		void Method2(){//dosomething for SubSys2}
+	}
+	class Facade	//外观类
+	{
+	public:
+		SubSys1 Ptr1;
+		SubSys2 Ptr2;
+		
+		viod Facade()
+		{
+			Ptr1 = new SubSys1() ;
+			Ptr2 = new SubSys2();
+		}
+		void MethodA(){Ptr1.Method1();Ptr2.Method2();}
+		void MethodB(){Ptr2.Method2();}
+	}
+	//使用方式
+	Facade facade = new Facade();
+	facade.MethodA();			//调用外观类的方法，不需要关注里面复杂的历史逻辑
+	facade.MethodB();			//由外观类和复杂代码交互，使用者只需要和外观类交互 
+	
+9. 建造者模式/生成器模式：将一个复杂对象的构建与它的表示分离，使得统一的建造过程可以创建不同的表示
+	class Product		//具体的产品
+	{
+		IList<string> parts = new List<string>();
+	public:
+		void Add(string part){parts.add();}
+		void Show(){cout<<parts<<endl;}
+	}
+	class Builder		//Builder是为创建一个Product对象的各个部件指定的抽象接口类
+	{
+	public:
+		virtual void BuildPartA();
+		virtual void BuildPartB();
+		virtual Product GetResult();
+	}
+	class ConcreteBuilder1 : Builder	//具体建造者，实现Builder接口，构造和装配各个部件
+	{
+	private:
+		Product product = new Product();
+	public:
+		override void BuildPartA(){product.Add("A");}	//建造具体的部件
+		override void BuildPartB(){product.Add("B");}
+		override Product GetResult(){return Product;}
+	}
+	class ConcreteBuilder2 : Builder
+	{
+	private:
+		Product product = new Product();
+	public:
+		override void BuildPartA(){product.Add("C");}	//建造具体的部件
+		override void BuildPartB(){product.Add("D");}
+		override Product GetResult(){return Product;}
+	}
+	class Director
+	{
+	public:
+		void Construct(Builder builder)
+		{
+			builder.BuildPartA();		//用来指挥建造过程
+			builder.BuildPartB();
+		}
+	}
+	//使用方式
+	Director director = new Director();
+	Builder b1        = new ConcreteBuilder1();
+	Builder b2        = new ConcreteBuilder2();
+	
+	director.Construct(b1);		//指挥者用ConcreteBuilder1的方法来建造产品
+	Product p1 = b1.GetResult();
+	p1.Show();
+	director.Construct(b2);		//指挥者用ConcreteBuilder2的方法来建造产品
+	Product p2 = b2.GetResult();
+	p2.Show();	
+	
+10. 观察者模式/发布-订阅模式：定义了一种一对多的依赖关系，让多个观察者对象同时监听某一个主题对象。这个主题对象在状态发生拜年话时，会通知所有观察者对象，使他们能够自动更新自己
+						当一个对象的改变需要同时改变其他对象的时候，而且他不主动具体有多少对象待改变
+	class Observer	//抽象观察者
+	{
+	public:
+		void Updata();
+	}
+	class Subject	//抽象通知者
+	{
+	private:
+		list<Observer> observers = new list<Observer>();
+	public:
+		viod Attach(Observer observer){observers.Add(observer);}
+		void Detach(Observer observer){observers.Remove(observer);}
+		void Notify()
+		{
+			list<Observer>::iterator theIterator = observers.front(); 
+			while( theIterator++ != observers.end() )
+			{
+				*theIterator.Updata();			//遍历链表，通知所有观察者，调用观察者的Updata函数，更新观察者的状态
+			}
+		}
+	}
+	class ConcreteObserver ：Observer 	//具体观察者
+	{
+	private:
+		string name;
+		string observerState;
+		ConcreteObserver subject;
+	public:
+		ConcreteObserver(ConcreteObserver subject, string name){this.subject = subject; this.name = name;}
+		override void Updata(){observerState = subject.observerState;}	//更新观察者的状态
+		ConcreteObserver GetConcreteObserver(){return subject;}
+		void SetConcreteObserver(ConcreteObserver subject){this.subject = subject;}
+	}
+	class ConcreteSubject Subject 	//具体通知者
+	{
+	private:
+		string observerState;
+	public:
+		observerState GetConcreteObserver(){return observerState;}
+		void SetConcreteObserver(string value){observerState = value;}
+	}	
+	//使用方法
+	main()
+	{
+		ConcreteSubject s = new ConcreteSubject();
+		
+		s.Attach(new ConcreteObserver(s, "x"));		//把观察者放进通知者里面
+		s.Attach(new ConcreteObserver(s, "y"));		
+			
+		s.observerState = "ABC"						//当通知者发生变化的时候，通知者会调用观察者的Update函数，使观察者的状态发生变化
+		s.Notify();
+	}
+	
+11. 抽象工厂模式：提供一个创建一系列相关或互相依赖对象的接口，而无需指定它们具体的类
+				简单工厂模式使得一个factory可以根据关键字创建出不同的类，而抽象工厂模式在此基础上，抽象出ifactory，使得可以创建出不同的工厂
+				它让具体的创建实例过程与客户端分离，客户端是通过它们的抽象接口操纵实例，产品的具体类名也被具体工厂的实现分离，不会出现在客户端代码中
+	class IDepartment	//抽象产品类
+	class A1Department : IDepartment	//具体产品类A1
+	class A2Department : IDepartment	//具体产品类A2
+	class IUser			//抽象产品类
+	class B1User	   ：IUser			//具体产品类B1
+	class B2User	   ：IUser			//具体产品类B2
+	class IFactory		//抽象工厂类
+	{
+		IUser CreateUser();
+		IDepartment CreateDepartment();		//把工厂接口方法抽象出来
+	}
+	class A1Factory : IFactory	//具体工厂类1	//在需要的时候使用不同的工厂类来创建出不同的产品类
+	{
+	public:
+		IUser CreateUser(){return new B1User();}
+		IDepartment CreateDepartment(){return new A1Department();}
+	}
+	class A2Factory : IFactory	//具体工厂类2
+	{
+	public:
+		IUser CreateUser(){return new B2User();}
+		IDepartment CreateDepartment(){return new A2Department();}
+	}
+	//使用方法
+	void main()
+	{
+		//IFactory factory = new A1Factory();		//通过调换A1Factory实例化对象，即可以创建出不同的User对象和Department对象
+		IFactory factory = new A2Factory();			//用抽象的思维，把工厂的抽象出来一个IFactory，各个不同的工厂继承IFactory和负责创建不同实例化对象
+													//这样在使用的时候，使用IFactory定义出来接口就可以创建出不同工厂里的不同对象
+		IUser    iu      = factory.CreateUser();		//这里创建的是A1User产品类
+		IDepartment id   = factory.CreateDepartment();	//这里创建的是A1Department产品类
+	}
+	使用反射+配置文件实现----利用简单工厂模式去优化抽象工厂模式
+	App.config.xml
+	<key = "DB" value = "A1">	//value也可以等于B1
+	class DateAccess
+	{
+	private:
+		static string db = readXML("DB");	//db可以根据xml内的配置决定value
+	public:
+		static IUser CreateUser()
+		{
+			string classname = db + "User"	//classname=A1User
+			return CreateInstance(classname);	//这里创建的是A1User产品类
+		}
+		static IDepartment CreateDepartment()
+		{
+			string classname = db + "Department"	//classname=A1Department
+			return CreateInstance(classname);
+		}
+	}
+	
+12. 状态模式：当一个对象的内在状态改变时允许改变其行为，这个对象看起来像是改变了这个类
+			状态模式主要解决的是当控制一个对象状态转换的条件表达式过于复杂时的情况。把状态的判断逻辑转移到表示不同状态的一系列类当中，可以把复杂的判断逻辑简化
+			当一个对象的行为取决于它的状态，并且它必须在运行时刻根据祖杭他改变它的行为时，就可以考虑使用状态模式
+	class State
+	{
+	public:
+		viod Handle(Context context)
+	}
+	ConcreteStateA : State
+	{
+	public:
+		viud Handle(Context context){context.State = new ConcreteStateB();}	//状态A经过Handle后状态变成B
+	}
+	ConcreteStateB : State
+	{
+	public:
+		viud Handle(Context context){context.State = new ConcreteStateA();}	//状态B经过Handle后状态变成A
+	}
+	class Context
+	{
+	private：
+		State state;
+	public:
+		Context(State state){this.state = state;}	//定义Context的初始状态
+		GetState()	//读写状态
+		SetState()
+		void Request()			//对请求做处理，并设置下一个状态
+		{
+			state.Handle(this);
+		}
+	}
+	//使用方法
+	void main()
+	{
+		Context C = new Context(new ConcreteStateA);	//初始化的状态为A
+		
+		C.Request();		//通过请求函数改变为状态B
+	}
+	
+13. 适配器模式：将一个类的接口转换成客户希望的另一个接口。 
+			Adapter模式使得原本由于接口不兼容而不能一起工作的那些类可以一起工作
+			在双方都不太容易修改的时候再使用适配器模式适配
+	class Target
+	{
+	public:
+		virtual void Request();
+	}
+	class Adaptee
+	{
+	public:
+		void SpecificRequest();
+	}
+	class Adapter : Target
+	{
+	private:
+		Adaptee adaptee = new Adaptee();	//建立一个私立的Adaptee对象
+	public:
+		void Request(){adaptee.SpecificRequest();}	//把表面上调用Requset方法变成调用SpecificRequest方法
+	}
+	
+14. 备忘录模式：在不波坏封装性的前提下，捕捉一个对象内部的状态，并在该对象之外保存这个状态。必要的时候可以使用保存的状态信息去还原对象的状态
+	class Originbator//发起人类
+	{
+	private:
+		string name;
+	public:
+		GetName();
+		SetName();
+		
+		Memento CreateMemento(){return (new Memento(name));}	//创建备忘录，将当前需要保存的信息导入并实例化一个Memento对象
+		void    SetMemento(Memento memento){this.name = memento.name;}	//恢复备忘录，将Memento导入并将相关数据恢复
+	}
+	class Memento	//备忘录类
+	{
+	private:
+		string name;
+	public:
+		Memento(string name){this.name = name;}	//默认构造函数，将相关数据保存
+	}
+	class Caretker	//管理者类
+	{
+	private:
+		Memento memento;
+	public:
+		void SetMemento()	//保存Memento对象
+		Memento GetMemento()//取出保存的Memento对象
+	}
+	//使用方法
+	void main()
+	{
+		Originbator O = new Originbator();
+		Caretker    C = new Caretker();
+		
+		C.SetMemento(O.CreateMemento());	//将Originbator创造出来的Memento放入到Caretker中保存
+		O.SetMemento(C.GetMemento());		//取出Caretker中保存的Memento对象，还原到Originbator类
+	}
+
+15. 组合模式：将对象组成树形结构以表示‘部分-整体’的层次结构。组合模式使得用户对单个对象和组合对象的使用具有一致性
+		透明方式：Component中声明了所有用来管理子对象的方法，好处是叶节点和枝节点对于外界没有区别，坏处是Leaf不具有Add等功能，实现方法没有意义
+		安全方式：在Component中不声明了Add和Remove方法，不暴露接口，客户端调用需要做相应的判断
+		组合模式可以让客户一致地使用组合结构和单个对象
+	class Component
+	{
+	protected:
+		string name;
+	public:
+		Component(string name){this.name = name;}
+		void Add(Component c);
+		void Remove(Component c);
+		void Display(int path);
+	}
+	class Leaf: Component	//叶节点
+	{
+	public:
+		Leaf(string name){Component::name = name;}
+		void Add(Component c);
+		void Remove(Component c);
+		void Display(int path);
+	}
+	class Composite: Component
+	{
+	private:
+		List<Component>children = new List<Component>;	//一个子对象集合用来存储其下属的枝节点和叶节点 
+	public:
+		Composite(string name){Component::name = name;}
+		void Add(Component c);
+		void Remove(Component c);
+		void Display(int path){children[0-path].Display();}	//遍历所有子节点
+	}
+	//使用方式
+	void main()
+	{
+		Composite root = new Composite("root");
+		root.Add(new Leaf("leaf a"));
+		root.Add(new Leaf("leaf b"));
+
+		Composite comp = new Composite("comp");
+		root.Add(new Leaf("comp a"));
+		root.Add(new Leaf("comp b"));
+		
+		rood.Add(comp);
+	}
+	
+16. 迭代器模式：提供一种方法顺序访问一个聚合对象中的各个元素，而又不暴露该对象的内部细节
+	略	见string::Iterator iterator
+	
+17. 单例模式：保证一个类仅有一个实例，并提供一个访问它的全局访问点
+			让类自身复杂保存它的唯一实例，这个类可以保证没有其他实例可以被创建，并且它可以提供一个访问该实例的方法
+	class Singleten	
+	{
+	private:
+		Singleten instance;
+		void Singleten();//让构造方法为private属性，这就堵死了外界利用new创建此类实例的可能
+	public:
+		static Singleten GetInstance()
+		{
+			//trylook();	//防止多线程竞争问题导致创建多个实例，使代码进入临界区
+			if(instance == null)
+			{
+				trylook();	//双重锁定，先判断instance是否存在，提高线程效率
+				if(instance == null)
+					instance = new Singleten();
+			}	
+			return instance;
+		}
+	}
+	//上面方式需要实现线程安全且在类第一次被使用时才实例化该类，简称懒汉单例
+	//下面方式是程序运行时就预先实例化该类，这种静态初始化的方式简称饿汉单例
+	Solution* Solution::mSolution = new Solution();//预先在自己被加载时就将自己实例化
+	class Solution {
+	public:
+		static Solution* mSolution;
+		Solution(){};
+		static Solution* getInstance() 
+		{ 
+			return mSolution;	//已经实例化过，直接return实例化对象即可
+		}
+	};
+	
+18. 桥接模式：将抽象部分与它的实现部分分离，使它们都可以独立地变化
+			实现指的是抽象类和它的派生类用来实现自己的对象
+	class Implementor
+	{
+	public:
+		viod Operation();
+	}
+	class ConcreteImplementorA : Implementor
+	{
+	public:
+		void Operation(){//具体实现A的特定方法}
+	}
+	class ConcreteImplementorB : Implementor
+	{
+	public:
+		void Operation(){//具体实现B的特定方法}
+	}
+	class Abstraction
+	{
+	protected:
+		Implementor implementor;
+	public:
+		void SetImplementor(Implementor implementor){this.implementor = implementor;} //桥接接口
+		virtual void Operation(){implementor.Operation();}//调用桥接对象的Operation方法
+	}
+	class RefineAbstraction ：Abstraction
+	{
+	public:
+		void Operation(){implementor.Operation();}
+	}
+	//使用方法
+	void main()
+	{
+		Abstraction ab = new RefineAbstraction();
+		
+		ab.SetImplementor(new ConcreteImplementorA());	//把ConcreteImplementorA对象桥接到Abstraction
+		ab.Operation();									//调用的是ConcreteImplementorA的Operation方法
+
+		ab.SetImplementor(new ConcreteImplementorB());	//把ConcreteImplementorB对象桥接到Abstraction
+		ab.Operation();									//调用的是ConcreteImplementorB的Operation方法
+	}
+	
+19. 命令模式：将一个请求封装成为一个对象，从而使你可用不同的请求对客户进行参数化，对请求排队或者记录请求日志，以及支持可撤销的操作
+	class Command
+	{
+	protected:
+		Receiver receiver;
+	public:
+		void Command(Receiver receiver){this.receiver = receiver};
+		virtual void Execute();
+	}
+	class ConcreteCommand : Command	//ConcreteCommand类，将一个接收者对象绑定于一个动作，调用接收者相应的操作，以实现Execute
+	{
+	public:
+		ConcreteCommand(Receiver receiver){Command::receiver = receiver;}
+		void Execute(){receiver.Action();}
+	}
+	class Invoker //Invoker类，要求该命令执行这个请求
+	{
+	private：
+		Command command;
+	public:
+		void SetCpmmand(Command command){this.command = command;}
+		void ExecuteCommand(){command.Execute();}
+	}
+	class Receiver // Receiver类，知道如何实施与执行一个与请求相关的操作，任何类都可能作为一个接收者
+	{
+	public：
+		void Action(){//do something}
+	}
+	//使用方法
+	void main()
+	{
+		Receiver r = new Receiver();
+		Command  c = new ConcreteCommand(r);
+		Invoker  i = new Invoker();
+		i.SetCommand(c);
+		i.ExecuteCommand();
+	}
+	
+20. 责任链模式：使多个对象都有机会处理请求，从而避免请求的发送者和接收者之间的耦合关系。将这份对象连成一条链，并沿着这条链传递该请求，直到有一个对象处理它为止
+	class Handle	//抽象基类
+	{
+	protected:
+		Handle successor;
+	public:
+		void SetSuccessor(Handle successor){this.successor = successor;}	//设置下一个责任对象，构成责任链
+		virtual void HandleRequest(int request);	//处理请求的抽象方法
+	}
+	class ConcreteHandler1 : Handle
+	{
+	public:
+		override void HandleRequest(int request)
+		{
+			if(request < 10)	//在请求能在本责任对象处理
+			{
+				//do something
+			}
+			else if(successor != null)
+			{
+				successor.HandleRequest(request);	//转由下一个责任对象处理这个请求
+			}
+		}
+	}
+	class ConcreteHandler2 : Handle
+	{
+	public:
+		override void HandleRequest(int request)
+		{
+			if((request >= 10) && (request < 20))	//在请求能在本责任对象处理
+			{
+				//do something
+			}
+			else if(successor != null)
+			{
+				successor.HandleRequest(request);	//转由下一个责任对象处理这个请求
+			}
+		}
+	}
+	//使用方法
+	void main ()
+	{
+		Handle h1 = new ConcreteHandler1();
+		Handle h2 = new ConcreteHandler1=2();
+		h1.SetSuccessor(h2);	//h1和h2构成一个责任对象链
+		
+		int[] request = {1, 2, 34, 55, 20, 4, 12};
+		for(int i = 0; i < size; i++)
+			h1.HandleRequest(request[i])	//调用责任链处理这些请求
+	}
+	
+21. 中介者模式：用一个中介对象来封装一系列的对象交互。中介者使各对象不需要显式地互相作用，从而使其解耦，而且可以独立地改变他们之间的交互
+	class Mediator	//抽象中介者类
+	{
+	public：
+		void Send(String message, Colleague colleague);
+	}
+	class Colleague	//抽象通信类
+	{
+	protected:
+		Mediator mediator;
+	public：
+		Colleague(Mediator mediator){this.mediator = mediator;}
+	}
+	class ConcreteMediator : Mediator //具体中介者类
+	{
+	private：
+		ConcreteColleague1 colleague1;
+		ConcreteColleague2 colleague2;
+	public：
+		SetConcreteColleague1(Colleague colleague1){this.colleague1 = colleague1;}
+		SetConcreteColleague2(Colleague colleague2){this.colleague2 = colleague2;}
+		void Send(String message, Colleague colleague)
+		{
+			if(colleague == colleague1) colleague2.Notify();	//中介者为colleague1和colleague2的通信做转发
+			if(colleague == colleague2) colleague1.Notify();
+		}
+	}
+	class ConcreteColleague1 : Colleague
+	{
+	public:
+		void ConcreteColleague1(Mediator mediator){Mediator::mediator = mediator;}	//构造函数，设置中介者
+		void Send(String message){mediator.Send(message, this);}	//通过中介者发生消息
+		void Notify(String message){printf("get message %s", message);}	//在这里处理得到的消息
+	}
+	class ConcreteColleague2 : Colleague
+	{
+	public:
+		void ConcreteColleague2(Mediator mediator){Mediator::mediator = mediator;}	//构造函数，设置中介者
+		void Send(String message){mediator.Send(message, this);}	//通过中介者发生消息
+		void Notify(String message){printf("get message %s", message);}	//在这里处理得到的消息
+	}
+	//使用方式
+	void main()
+	{
+		ConcreteMediator m = new ConcreteMediator();
+		
+		ConcreteColleague1 c1 = new ConcreteColleague1(m);	//让c1和c2都知道中介者对象
+		ConcreteColleague2 c2 = new ConcreteColleague2(m);
+		
+		m.ConcreteColleague1 = c1;	//中介者对象知道c1和c2
+		m.ConcreteColleague2 = c2;
+		
+		c1.Send("sad");		//c1通过中介者对象发生消息给c2
+		c2.Send("happy");
+	}
+	
+22. 享元模式：运用共享技术有效地支持大量细粒度的对象，这里需要注意内部状态和外部状态
+			内部状态指的是共享代码里可以共享使用内部变量等
+			外部状态指的是不同对象各自特有的变量等，不可以通过享元模式共用
+	class User		//外部状态，不同实例化对象各种特有的数据
+	{
+	private：
+		string name;
+	public:
+		void User(string name){this.name = name;}
+		string GetName(){return this.name;}
+	}
+	class WebSide	//抽象工厂类
+	{
+	public:
+		virtual void Use(User user);
+	}
+	class ConcreteWebSite : WebSide		//具体网站类
+	{
+	private：
+		string name = "";
+	public：
+		ConcreteWebSite(string name){this.name = name;}
+		override void Use(User user){//do something for user}
+	}
+	class WebSideFactory	//网站工厂类
+	{
+	private：
+		Hashtable flyweights = new Hashtable();
+	public:
+		WebSide GetWebSiteCategory(string key)
+		{
+			if(!flyweights.ContainKey(key))		//在工厂里面，通过key拿到同一个实例化对象ConcreteWebSite，实现共享ConcreteWebSite对象
+				flyweights.add(key, new ConcreteWebSite(key));
+			return ((WebSide)flyweights[key]);
+		}
+		int GetWebSiteCount(){return flyweights.count;}
+	}
+	//使用方法
+	void main()
+	{
+		WebSideFactory f = new WebSideFactory();
+		
+		WebSide fx = f.GetWebSiteCategory("f1");	
+		fx.Use(new User("name1"));		//Use里面保存的是外部状态，为不同实例化对象特有的数据
+		
+		WebSide fy = f.GetWebSiteCategory("f1");
+		fy.Use(new User("name2"));
+	}
+	
+23. 解释器模式：给定一个语言，定义它的文法的一种表示，并定义一个解释器，这个解释器使用该表示来解释语言中的句子
+				如果一种特定类型的问题发生的频率足够高，那么可以值得将该问题的各个实例表述为一个简单语言中的句子，这样可以构建一个解释器，该解释器通过解释这些句子来解决该问题
+	class AbstractExpression	//抽象表达式
+	{
+	public:
+		void Interpret(Context context);
+	}
+	class TerminalExpression : AbstractExpression	//终结符表达式，实现与文法中的终结符相关联的解释操作
+	{
+	public：
+		override void Interpret(Context context){//do something for TerminalExpression}
+	}
+	class NonterminalExpression : AbstractExpression	//非终结符表达式
+	{
+	public：
+		override void Interpret(Context context){//do something for NonterminalExpression}
+	}
+	class Context	//Context类，包含解释器之外的一些全局信息
+	{
+	private：
+		string input;
+		string output;
+	public:
+		string Getinput(){return this.input;}
+		string Setinput(string input){this.input = input;}
+		string Getoutput(){return this.output;}
+		string Setoutput(string output){this.output = output;}		
+	}
+	//使用方法
+	void main()
+	{
+		Context context = new Context();
+		IList<AbstractExpression> list = new List<AbstractExpression>();
+		list.add(new TerminalExpression());
+		list.add(new NoterminalExpression());
+		list.add(new TerminalExpression());
+		
+		for(//遍历list)
+			list[i].Interpret(context);		//调用list中的每个解释器中context中的信息进行解释操作
+	}  
+	
+24. 访问者模式：表示一个作用于某对象结构中的各元素的操作。它使你可以在不改变各元素的类的前提下定义作用与这些元素的新操作
+			适用于数据结构相对稳定的系统，它把数据结构和作用与结构上的操作之间的耦合解开，使操作集合可以相对自由地烟花
+			缺点是使增加新的数据结构变得困难
+	class Visitor	//为该对象结构中ConcreteElement的每一个类声明一个Visit操作
+	{
+	public:
+		void VisitConcreteElememtA(ConcreteElememtA concreteElememtA);
+		void VisitConcreteElememtB(ConcreteElememtB concreteElememtB);
+	}
+	ConcreteVisitor1 : Visitor	//具体的访问者，实现每个由Vsitor声明的操作
+	{
+	public：
+		override void VisitConcreteElememtA(ConcreteElememtA concreteElememtA){//do some thing for ConcreteElememtA}
+		override void VisitConcreteElememtB(ConcreteElememtB concreteElememtB){//do some thing for ConcreteElememtB}
+	}
+	ConcreteVisitor2 : Visitor	//具体的访问者，实现每个由Vsitor声明的操作，与1类似
+	{
+		...
+	}
+	class Element //定义一个Accept操作，以一个访问者为参数
+	{
+	public：
+		void Accpet(Visitor visitor);
+	}
+	class ConcreteElememtA : Element	//具体元素，实现Accpet
+	{
+	public：
+		override void Accpet(Visitor visitor){visitor.VisitConcreteElememtA(this);}
+	}
+	class ConcreteElememtB : Element	//具体元素，实现Accpet，与A类似
+	{
+		...
+	}
+	class ObjectStructure	//能枚举它的元素，可以提供一个高层接口以允许访问者访问它的元素
+	{
+	private：
+		IList<Element> elements = new List<Element>;
+	public：
+		void Attach(Element element){elements.add(element);}
+		void Detach(Element element){elements.Remove(element);}
+		void Accpet(Visitor visitor){elements[i-all].Accpet(visitor);}	//访问List里面每个element的Accpet方法
+	}
+	//使用方法
+	void main()
+	{
+		ObjectStructure o = new ObjectStructure();
+		o.Attach(new ConcreteElememtA());
+		o.Attach(new ConcreteElememtB());
+		
+		ConcreteVisitor1 v1 = new ConcreteVisitor1();
+		ConcreteVisitor2 v2 = new ConcreteVisitor2();
+		
+		o.Accpet(v1);
+		o.Accpet(v2);
+	}
